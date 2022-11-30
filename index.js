@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const PORT = process.env.PORT || 5000;
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // create app:
 const app = express();
@@ -55,6 +55,26 @@ async function run() {
             const myProducts = await carForSell.find(query).toArray();
             res.send(myProducts);
         });
+        // product advertise status updated:
+        app.put("/update/:id", async(req, res) => {
+            const query = { _id:ObjectId(req.params.id)};
+            const options={
+                upsert: true
+            };
+            const updateDoc={
+                $set:{
+                    add:true
+                }
+            }
+            const update = await carForSell.updateOne(query, updateDoc, options);
+            res.send(update);
+        })
+        // insert a new car to the carForSell
+        app.post("/add-car", async(req, res) => {
+            const carData = req.body;
+            const result = await carForSell.insertOne(carData);
+            res.send(result);
+        });
         // get all sellers
         app.get("/all/sellers", async(req, res) => {
             const query={ role:"seller"};
@@ -66,10 +86,21 @@ async function run() {
             const query = { email: req.params.email };
             const deleteResult= await userColl.deleteOne(query);
             res.send(deleteResult);
-        })
+        });
+        app.get("/all/buyers", async(req, res) => {
+            const query={ role:"buyer"};
+            const buyers = await userColl.find(query).toArray();
+            res.send(buyers);
+        });
+        // delete the seller
+        app.delete("/buyer/delete/:email", async(req, res) => {
+            const query = { email: req.params.email };
+            const deleteResult= await userColl.deleteOne(query);
+            res.send(deleteResult);
+        });
         // load six car for home page:
         app.get("/home/usedCar", async(req, res) => {
-            const result = await carForSell.find({}).limit(6).toArray();
+            const result = await carForSell.find({add:true}).toArray();
             res.send(result);
         });
         app.get("/used-cars/:category", async(req, res) => {
