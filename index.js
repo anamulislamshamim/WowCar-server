@@ -60,6 +60,12 @@ async function run() {
             const query={ role:"seller"};
             const sellers = await userColl.find(query).toArray();
             res.send(sellers);
+        });
+        // delete the seller
+        app.delete("/seller/delete/:email", async(req, res) => {
+            const query = { email: req.params.email };
+            const deleteResult= await userColl.deleteOne(query);
+            res.send(deleteResult);
         })
         // load six car for home page:
         app.get("/home/usedCar", async(req, res) => {
