@@ -30,7 +30,37 @@ async function run() {
         const db = client.db("WowCar");
         // car-for-sell connection
         const carForSell = db.collection("car-for-sell");
+        // users collection
+        const userColl = db.collection("users");
+        // bookCars connection
+        const bookedCars = db.collection("bookedCars");
         // create all api below:
+        // store the use to the database:
+        app.post("/create-user", async(req, res) => {
+            const user = req.body;
+            const result = await userColl.insertOne(user);
+            res.status(201).send(result);  
+        });
+        // check the role:
+        app.get("/user/role/:email", async(req, res) => {
+            const email = req.params.email;
+            const query = { email:email };
+            const result = await userColl.findOne(query);
+            // console.log(result);
+            res.send({role:result.role});
+        });
+        // get the products for the particular seller by the email
+        app.get("/seller/products/:email", async(req, res) => {
+            const query = { sellerEmail:req.params.email};
+            const myProducts = await carForSell.find(query).toArray();
+            res.send(myProducts);
+        });
+        // get all sellers
+        app.get("/all/sellers", async(req, res) => {
+            const query={ role:"seller"};
+            const sellers = await userColl.find(query).toArray();
+            res.send(sellers);
+        })
         // load six car for home page:
         app.get("/home/usedCar", async(req, res) => {
             const result = await carForSell.find({}).limit(6).toArray();
@@ -46,6 +76,12 @@ async function run() {
             };
             const result = await carForSell.find(query).toArray();
             res.send(result);
+        });
+        // store the booked cars:
+        app.post("/used-car/booked", async(req,res) => {
+            const bookData = req.body;
+            const result = await bookedCars.insertOne(bookData);
+            res.status(200).send(result);
         });
     } finally {
         // client.close(); 
