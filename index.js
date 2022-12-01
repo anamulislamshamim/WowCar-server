@@ -47,8 +47,10 @@ async function run() {
         const carForSell = db.collection("car-for-sell");
         // users collection
         const userColl = db.collection("users");
-        // bookCars connection
+        // bookCars collection
         const bookedCars = db.collection("bookedCars");
+        // reported car collection
+        const reportedCar = db.collection("reportedCars");
         // create all api below:
         // verifyAdmin(req, res, next);
         const verifyAdmin = async(req, res, next) => {
@@ -75,6 +77,30 @@ async function run() {
                     error:"Invalid user"
                 })
             }
+        });
+        // store the reported car 
+        app.post("/report", async(req, res) => {
+            const reportInfo = req.body;
+            const productId = reportInfo.productId;
+            const isreported = await reportedCar.findOne({ productId:productId });
+            if(isreported){
+                res.status(403).send("You already reported this item!");
+            };
+            const result = await reportedCar.insertOne(reportInfo);
+            res.status(200).send(result);
+        });
+        // get all the reported item from the admin page:
+        app.get("/admin/reported/items", async(req, res) => {
+            const reportedCarIds = await reportedCar.find({}).project({ productId:1,_id:0 }).toArray();
+            const allcars = await carForSell.find({}).toArray();
+            // console.log(allcars);
+            const onlyreportedcar = reportedCarIds.filter(reportId => {
+                // console.log(reportId.productId);
+                const reportCarIdx = allcars.find(car => car._id === ObjectId(reportId.productId));
+                console.log(reportCarIdx);
+            });
+            console.log(onlyreportedcar);
+            res.send("success");
         });
         // store the use to the database:
         app.post("/create-user", async (req, res) => {
@@ -161,6 +187,14 @@ async function run() {
             const result = await bookedCars.insertOne(bookData);
             res.status(200).send(result);
         });
+        // get the all book car for the particular buyers:
+        app.get("/mybook/cars", async(req, res) => {
+            const email = req.query.email;
+            const query = { email:email };
+            console.log(email);
+            const myBookCar = await bookedCars.find(query).toArray();
+            res.send(myBookCar);
+        })
     } finally {
         // client.close(); 
     }
