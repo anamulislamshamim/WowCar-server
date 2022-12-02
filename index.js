@@ -91,16 +91,8 @@ async function run() {
         });
         // get all the reported item from the admin page:
         app.get("/admin/reported/items", async(req, res) => {
-            const reportedCarIds = await reportedCar.find({}).project({ productId:1,_id:0 }).toArray();
-            const allcars = await carForSell.find({}).toArray();
-            // console.log(allcars);
-            const onlyreportedcar = reportedCarIds.filter(reportId => {
-                // console.log(reportId.productId);
-                const reportCarIdx = allcars.find(car => car._id === ObjectId(reportId.productId));
-                console.log(reportCarIdx);
-            });
-            console.log(onlyreportedcar);
-            res.send("success");
+            const cars = await reportedCar.find({}).toArray();
+            res.send(cars);
         });
         // store the use to the database:
         app.post("/create-user", async (req, res) => {
